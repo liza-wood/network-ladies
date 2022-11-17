@@ -1,0 +1,82 @@
+```{r}
+id <- ngRok::livestream_start(port = 8080, 
+                              hostname = "www.rdaviscode.com",
+                              password = 'nifflers', 
+                              user = 'rdavis', scheme = 'http')
+```
+
+## Vocabulary  
+
+Repo here: https://github.com/liza-wood/network-ladies
+
+* Adjacency matrix: square matrix with the same names on 
+* Incidence matrix: maybe a rectangular  
+
+* Two-mode: only mode one to mode two, no intermode connections, formatted as mode one as rows and mode two as columns -- rectangular
+* Bipartite: mode one can connect to mode one and mode two can connect to mode two, and mode one to mode two, so same rows and columns -- square  
+
+* Multi-mode: multiple kinds of nodes; we think this just appears as a node attributes, in the end, since bipartite methods end up giving a level attribute to the node  
+* Multi-plex: multiple kinds of edges  
+
+```{r}
+mat <- as.matrix(read.csv('data/ecoatlas_onemode.csv', row.names = 1))
+```
+
+```{r}
+library(igraph)
+library(network)
+```
+
+## Edgelists vs. matrics
+
+In the end, all networks are matrices, and if you want to start with a matrix.  
+
+It seems like igraph, by default, will give you the correct output. We needed to specify that weight = T for igraph, otherwise it seems to count more edges than there were.  
+
+```{r}
+?graph_from_adjacency_matrix
+g_igraph <- graph_from_adjacency_matrix(mat, weighted = T)
+g_igraph
+
+?network
+g_network <- network::network(mat, multiple = T)
+g_network
+```
+
+What if we don't want it to be weighted?
+```{r}
+mat_uw <- ifelse(mat > 0, 1, 0)
+g_network <- network::network(mat_uw, multiple = F)
+# OR
+g_network <- network::network(mat, ignore.eval = F, names.eval = 'weights')
+g_network
+```
+
+## Plotting
+```{r}
+library(sna)
+library(ggplot2)
+library(GGally)
+```
+
+### gplot with `sna()`
+```{r}
+gplot(g_network)
+```
+
+### ggnet with `GGally()`
+https://briatte.github.io/ggnet/#node-sizes 
+
+```{r}
+ggnet2(delete.vertices(g_network, isolates(g_network)), 
+       size = "degree", legend.position = "none", 
+       label = c("City.of.Foster.City", "California.State.Parks",
+                 "City.of.Novato"),
+       #edge.size = "weights",
+       color = 'darkblue')
+```
+
+## Conclusions  
+1. igraph is out, network objects are in  
+2. adjacency are good to understand (necessary for more advanced analysis)  
+3. lots of potential for `ggnet2` function to be the preferred plotting tool  
